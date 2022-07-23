@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t milkplease/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true milkplease/react-test npm test
+
+after_success:
+  - docker build -t milkplease/multi-client ./client
+  - docker build -t milkplease/multi-nginx ./nginx
+  - docker build -t milkplease/multi-server ./server
+  - docker build -t milkplease/multi-worker ./worker
+
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  - docker push milkplease/multi-client
+  - docker push milkplease/multi-nginx
+  - docker push milkplease/multi-server
+  - docker push milkplease/multi-worker
